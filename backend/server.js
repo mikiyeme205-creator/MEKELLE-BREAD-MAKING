@@ -4,7 +4,14 @@ require('dotenv').config(); // ← ADD THIS AT THE TOP!
 const connectDB = require('./config/database');
 
 const app = express();
+app.get('/', (req, res) => {
+  res.json({ message: 'Digital Bread API is running!' });
+});
 
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(Server running on port ${PORT});
+});
 // Middleware
 app.use(express.json());
 
