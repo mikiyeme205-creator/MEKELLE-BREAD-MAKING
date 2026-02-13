@@ -31,7 +31,7 @@ app.get('/health', (req, res) => {
 });
 
 // 🔴 THIS LINE IS CORRECT:
-const PORT = process.env.PORT  5000;  // ← NOTICE THE  OPERATOR!
+const PORT = process.env.PORT || 5000;  // ← NOTICE THE  OPERATOR!
 
 // Start server
 const server = app.listen(PORT, () => {
