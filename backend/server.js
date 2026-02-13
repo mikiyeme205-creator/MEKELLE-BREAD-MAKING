@@ -59,8 +59,8 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// 🔴 FIXED LINE - This was the error!
-const PORT = process.env.PORT  5000;  // ← CORRECT: uses  not just space
+// 🔴 THIS IS THE ONLY LINE YOU NEED TO FIX - MAKE IT EXACTLY THIS:
+const PORT = process.env.PORT  5000;  // ← MUST HAVE  NOT JUST SPACES!
 
 // Start server
 const server = app.listen(PORT, () => {
