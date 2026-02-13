@@ -1,28 +1,46 @@
+// backend/config/database.js
 const { MongoClient, ServerApiVersion } = require('mongodb');
+require('dotenv').config(); // ← ADD THIS LINE!
 
-const uri = process.env.MONGODB_URI || "mongodb+srv://mikiyeme205_db_user:DigitalBread2026!@cluster0.vfriurw.mongodb.net/digital_bread?retryWrites=true&w=majority&appName=Cluster0";
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
-
-async function connectDB() {
+const connectDB = async () => {
   try {
-    // Connect the client to the server
+    // Get URI from environment variables
+    const uri = process.env.MONGODB_URI;
+    
+    if (!uri) {
+      throw new Error('❌ MONGODB_URI not found in .env file!');
+    }
+
+    console.log('🔌 Connecting to MongoDB...');
+    
+    const client = new MongoClient(uri, {
+      serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+      }
+    });
+
+    // Connect to MongoDB
     await client.connect();
-    // Send a ping to confirm a successful connection
+    
+    // Ping database to confirm connection
     await client.db("admin").command({ ping: 1 });
-    console.log("✅ Pinged your deployment. You successfully connected to MongoDB!");
+    
+    console.log('✅ Successfully connected to MongoDB Atlas!');
+    console.log(📊 Database: digital_bread);
+    console.log(🌍 Cluster: ${uri.split('@')[1].split('/')[0]});
+    
     return client;
   } catch (error) {
-    console.error("❌ MongoDB connection failed:", error);
+    console.error('❌ MongoDB connection failed:', error.message);
+    console.log('\n🔧 Troubleshooting:');
+    console.log('1. Check if .env file exists in backend folder');
+    console.log('2. Verify MONGODB_URI in .env is correct');
+    console.log('3. Check password in connection string');
+    console.log('4. Verify IP whitelist includes 0.0.0.0/0');
     process.exit(1);
   }
-}
+};
 
-module.exports = { connectDB, client };
+module.exports = connectDB;
