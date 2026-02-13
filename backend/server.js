@@ -5,26 +5,20 @@ const connectDB = require('./config/database');
 
 const app = express();
 
-// ✅ MIDDLEWARE - Must come BEFORE routes!
+// Middleware
 app.use(express.json());
 
-// ✅ VARIABLES - Fixed operator
-const PORT = process.env.PORT  5000;  // ← Added 
-
-// ✅ CONNECT TO DATABASE
-let dbClient = null;
-
+// Connect to MongoDB
 connectDB().then(client => {
-  dbClient = client;
+  // Make db available to routes
   app.locals.db = client.db('digital_bread');
   app.locals.mongoClient = client;
-  console.log('✅ Database connected and ready');
+  console.log('✅ Database connection established');
 }).catch(err => {
-  console.error('❌ Database connection failed:', err.message);
-  // Don't exit - API can still run for testing
+  console.error('❌ Failed to connect to database:', err);
 });
 
-// ✅ ROUTES
+// Root route
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Digital Bread Making API',
@@ -37,24 +31,22 @@ app.get('/', (req, res) => {
 // Test database route
 app.get('/api/test-db', async (req, res) => {
   try {
-    if (!app.locals.db) {
-      return res.status(503).json({ 
+    const db = app.locals.db;
+    if (!db) {
+      return res.status(500).json({ 
         success: false, 
-        error: 'Database not connected yet',
-        message: 'Please wait a few seconds and try again'
+        error: 'Database not connected' 
       });
     }
     
-    const db = app.locals.db;
     const collections = await db.listCollections().toArray();
     res.json({
       success: true,
-      message: '✅ Database connected!',
+      message: 'Database connected successfully!',
       collections: collections.map(c => c.name),
       database: 'digital_bread'
     });
   } catch (error) {
-    console.error('Database test error:', error);
     res.status(500).json({ 
       success: false, 
       error: error.message 
@@ -62,20 +54,22 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
-// Health check endpoint (for Render)
+// Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'healthy' });
+  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// ✅ START SERVER - Fixed template literals
+// 🔴 FIXED LINE - This was the error!
+const PORT = process.env.PORT  5000;  // ← CORRECT: uses  not just space
+
+// Start server
 const server = app.listen(PORT, () => {
-  console.log(🚀 Server running on port ${PORT});  // ← Fixed backticks
+  console.log(🚀 Server running on port ${PORT});
   console.log(📝 Environment: ${process.env.NODE_ENV || 'development'});
   console.log(🔗 Local: http://localhost:${PORT});
-  console.log(🔗 Test: http://localhost:${PORT}/api/test-db);
 });
 
-// ✅ GRACEFUL SHUTDOWN - Fixed template literals
+// Graceful shutdown
 process.on('SIGINT', async () => {
   console.log('\n👋 Shutting down gracefully...');
   if (app.locals.mongoClient) {
@@ -90,6 +84,6 @@ process.on('SIGINT', async () => {
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
-  console.error('❌ Unhandled Rejection:', err);
-  // Don't exit, just log
+  console.error('❌ Unhandled Promise Rejection:', err);
+  server.close(() => process.exit(1));
 });
