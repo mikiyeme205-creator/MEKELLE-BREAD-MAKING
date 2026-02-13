@@ -1,38 +1,66 @@
+// backend/server.js
 const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-require('dotenv').config();
+require('dotenv').config(); // ← ADD THIS AT THE TOP!
+const connectDB = require('./config/database');
 
 const app = express();
 
 // Middleware
-app.use(helmet());
-app.use(cors());
 app.use(express.json());
-app.use(morgan('dev'));
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/digital_bread', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
+// Connect to MongoDB
+connectDB().then(client => {
+  // Make db available to routes
+  app.locals.db = client.db('digital_bread');
+  app.locals.mongoClient = client;
 });
 
 // Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/products', require('./routes/products'));
-app.use('/api/orders', require('./routes/orders'));
-app.use('/api/payments', require('./routes/payments'));
-app.use('/api/users', require('./routes/users'));
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: 'Something went wrong!' });
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Digital Bread Making API',
+    status: 'running',
+    environment: process.env.NODE_ENV,
+    timestamp: new Date().toISOString()
+  });
 });
 
+// Test database route
+app.get('/api/test-db', async (req, res) => {
+  try {
+    const db = app.locals.db;
+    const collections = await db.listCollections().toArray();
+    res.json({
+      success: true,
+      message: 'Database connected!',
+      collections: collections.map(c => c.name),
+      database: 'digital_bread'
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+});
+
+// Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+const server = app.listen(PORT, () => {
+  console.log(🚀 Server running on port ${PORT});
+  console.log(📝 Environment: ${process.env.NODE_ENV});
+  console.log(🔗 Local: http://localhost:${PORT});
+});
+
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('\n👋 Shutting down gracefully...');
+  if (app.locals.mongoClient) {
+    await app.locals.mongoClient.close();
+    console.log('📊 MongoDB connection closed');
+  }
+  server.close(() => {
+    console.log('🛑 Server stopped');
+    process.exit(0);
+  });
 });
