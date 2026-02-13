@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Backend for Digital Bread Making",
   "main": "server.js",
+  "engines":{
+    "node":">=20.0.0 <22.0.0"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
@@ -12,6 +15,11 @@
     "mongodb": "^5.9.0",
     "dotenv": "^16.3.1",
     "cors": "^2.8.5"
+    "bcryptjs": "^2.4.3"
+    "jsonwebtoken": "^9.0.2"
+
+    
+
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
