@@ -17,33 +17,49 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18.x
-          # REMOVED cache line - this was causing the error
 
-      - name: 📱 Setup Expo
-        uses: expo/expo-github-action@v8
-        with:
-          expo-version: latest
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
-      - name: 📦 Navigate to frontend
-        run: cd frontend
+      - name: 📦 Install Expo and EAS globally
+        run: |
+          npm install -g expo-cli
+          npm install -g eas-cli
 
       - name: 📦 Install dependencies
         run: |
           cd frontend
           npm install
-          # Using npm install instead of npm ci to avoid lock file issues
+          # Verify installations
+          npx expo --version
+          npx eas --version
 
-      - name: 🚀 Build Android APK
+      - name: 🔧 Create eas.json if not exists
         run: |
           cd frontend
-          eas build --platform android --profile preview --non-interactive --no-wait
+          if [ ! -f eas.json ]; then
+            echo '{
+              "build": {
+                "preview": {
+                  "android": {
+                    "buildType": "apk"
+                  }
+                }
+              }
+            }' > eas.json
+          fi
+
+      - name: 🚀 Build Android APK
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          cd frontend
+          # Log in to Expo (using token)
+          npx expo login --non-interactive --token $EXPO_TOKEN || true
+          # Start the build
+          npx eas build --platform android --profile preview --non-interactive
 
       - name: 📤 Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: digital-bread-android-app
-          path: frontend/*.apk
+          path: frontend/build-*.apk
           if-no-files-found: warn
           retention-days: 30
