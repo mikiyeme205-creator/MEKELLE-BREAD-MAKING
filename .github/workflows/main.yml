@@ -9,9 +9,6 @@ jobs:
   build_android:
     name: Build Android APK
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -20,8 +17,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18.x
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          # REMOVED cache line - this was causing the error
 
       - name: 📱 Setup Expo
         uses: expo/expo-github-action@v8
@@ -30,15 +26,24 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
+      - name: 📦 Navigate to frontend
+        run: cd frontend
+
       - name: 📦 Install dependencies
-        run: npm ci
+        run: |
+          cd frontend
+          npm install
+          # Using npm install instead of npm ci to avoid lock file issues
 
       - name: 🚀 Build Android APK
-        run: eas build --platform android --profile preview --non-interactive --no-wait
+        run: |
+          cd frontend
+          eas build --platform android --profile preview --non-interactive --no-wait
 
       - name: 📤 Upload APK
-        uses: actions/upload-artifact@v4  # ← CHANGED TO v4
+        uses: actions/upload-artifact@v4
         with:
-          name: android-app-apk
+          name: digital-bread-android-app
           path: frontend/*.apk
-          retention-days: 30  # ← NEW: how long to keep the APK
+          if-no-files-found: warn
+          retention-days: 30
