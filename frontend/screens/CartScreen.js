@@ -285,3 +285,68 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   quantityButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quantityButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ec7f13',
+  },
+  quantityText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginHorizontal: 15,
+    minWidth: 20,
+    textAlign: 'center',
+  },
+  deleteButton: {
+    backgroundColor: '#ff4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 70,
+    height: '90%',
+    borderRadius: 15,
+    marginLeft: 10,
+  },
+  deleteButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  footer: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  totalContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  totalLabel: {
+    fontSize: 18,
+    color: '#666',
+  },
+  totalAmount: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#ec7f13',
+  },
+  checkoutButton: {
+    backgroundColor: '#ec7f13',
+    padding: 18,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  checkoutButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+});
