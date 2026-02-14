@@ -9,9 +9,6 @@ jobs:
   build_android:
     name: Build Android APK
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
       
@@ -19,26 +16,42 @@ jobs:
         with:
           node-version: 18.x
       
-      - name: 📦 Install dependencies with legacy peer deps
-        run: npm install --legacy-peer-deps
-      
-      - name: 🔧 Install EAS CLI globally
-        run: npm install -g eas-cli
-      
-      - name: 🔑 Verify EAS installation
+      - name: 📂 Go to frontend and list files
         run: |
-          npx eas --version
-          npx eas whoami || echo "Not logged in"
+          cd frontend
+          echo "📁 Files in frontend:"
+          ls -la
+          echo "📄 Checking package.json:"
+          cat package.json || echo "No package.json"
       
-      - name: 🚀 Build APK with EAS
+      - name: 📦 Install dependencies
+        run: |
+          cd frontend
+          npm install --legacy-peer-deps
+      
+      - name: 🔧 Install EAS CLI locally (not global)
+        run: |
+          cd frontend
+          npm install --save-dev eas-cli
+          echo "✅ EAS installed locally"
+      
+      - name: 🔑 Login to Expo
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          # Login using token
+          cd frontend
           npx expo login --non-interactive --token $EXPO_TOKEN
-          
-          # Build the APK
-          npx eas build --platform android --profile preview --non-interactive
+          npx expo whoami
+      
+      - name: 🚀 Build APK with local EAS
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          cd frontend
+          echo "🔧 Using local EAS:"
+          ./node_modules/.bin/eas --version
+          echo "🚀 Starting build..."
+          ./node_modules/.bin/eas build --platform android --profile preview --non-interactive
       
       - name: 📤 Upload APK
         uses: actions/upload-artifact@v4
@@ -47,5 +60,6 @@ jobs:
           path: |
             frontend/*.apk
             frontend/app/build/outputs/apk/**/*.apk
+            frontend/android/app/build/outputs/apk/**/*.apk
           if-no-files-found: warn
           retention-days: 30
