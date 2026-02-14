@@ -2,9 +2,7 @@ name: Create Production Builds
 
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -16,10 +14,10 @@ jobs:
         working-directory: frontend
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: ⚙️ Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 18.x
           cache: 'npm'
@@ -39,7 +37,8 @@ jobs:
         run: eas build --platform android --profile preview --non-interactive --no-wait
 
       - name: 📤 Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4  # ← CHANGED TO v4
         with:
           name: android-app-apk
           path: frontend/*.apk
+          retention-days: 30  # ← NEW: how long to keep the APK
