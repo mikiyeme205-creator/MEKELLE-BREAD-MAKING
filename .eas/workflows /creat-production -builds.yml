@@ -1,0 +1,94 @@
+# .eas/workflows/create-production-builds.yml
+name: Create Production Builds
+
+# When to run this workflow
+on:
+  # Automatically on pushes to main branch
+  push:
+    branches: [ main, master ]
+  
+  # Automatically on pull requests
+  pull_request:
+    branches: [ main, master ]
+  
+  # Allow manual trigger from GitHub UI
+  workflow_dispatch:
+
+# What to do in this workflow
+jobs:
+  # Android Build Job
+  build_android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 📱 Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📦 Install dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: 🚀 Build Android APK
+        run: |
+          cd frontend
+          eas build --platform android --profile preview --non-interactive --no-wait
+
+      - name: 📤 Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-app-apk
+          path: frontend/*.apk
+
+  # iOS Build Job (optional)
+  build_ios:
+    name: Build iOS IPA
+    runs-on: ubuntu-latest
+    if: false  # Set to true if you want iOS builds
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: 📱 Setup Expo
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: 📦 Install dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: 🚀 Build iOS IPA
+        run: |
+          cd frontend
+          eas build --platform ios --profile preview --non-interactive --no-wait
+
+      - name: 📤 Upload IPA
+        uses: actions/upload-artifact@v3
+        with:
+          name: ios-app-ipa
+          path: frontend/*.ipa
