@@ -1,79 +1,110 @@
-// backend/server.js
+// backend/server.js - COMPLETE FIXED VERSION
 const express = require('express');
-const mongoose = require('mongoose'); // Using mongoose instead of mongodb driver
+const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
 
+// ✅ CRITICAL: Bind to 0.0.0.0 (required for Render)
+const HOST = '0.0.0.0';
+const PORT = parseInt(process.env.PORT) || 10000; // Render default is 10000
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Connection with Mongoose (more stable)
+// ✅ FIX: Increase timeout values (prevents 502)
+app.use((req, res, next) => {
+  res.setTimeout(120000, () => {
+    console.log('Request timeout');
+    res.status(503).send('Service timeout');
+  });
+  next();
+});
+
+// MongoDB Connection with proper error handling
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      tls: true,
-      tlsAllowInvalidCertificates: process.env.NODE_ENV !== 'production',
-      tlsAllowInvalidHostnames: process.env.NODE_ENV !== 'production',
       serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 45000,
-      family: 4 // Force IPv4
+      family: 4,
+      maxPoolSize: 10,
+      minPoolSize: 2
     });
 
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-    console.log(`📊 Database: ${conn.connection.name}`);
-    console.log(`🔗 Connection state: ${conn.connection.readyState === 1 ? 'Connected' : 'Disconnected'}`);
-
     return conn;
   } catch (error) {
     console.error('❌ MongoDB connection error:', error.message);
-    console.error('Stack:', error.stack);
-    process.exit(1);
+    // Don't exit - keep server running even if DB fails
+    return null;
   }
 };
 
-// Connect to database
-connectDB();
+// Connect to database (don't block server start)
+connectDB().then(() => {
+  console.log('📊 Database connection initialized');
+});
 
-// Routes
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Digital Bread Making API',
-    status: 'running',
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
     database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-    nodeVersion: process.version,
+    uptime: process.uptime(),
     timestamp: new Date().toISOString()
   });
 });
 
-app.get('/health', (req, res) => {
+// Root endpoint
+app.get('/', (req, res) => {
   res.json({
-    status: 'healthy',
-    database: mongoose.connection.readyState === 1 ? 'up' : 'down',
-    uptime: process.uptime(),
-    memory: process.memoryUsage()
+    message: 'Digital Bread Making API',
+    status: 'running',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    server: `Listening on ${HOST}:${PORT}`,
+    timestamp: new Date().toISOString()
   });
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ 
-    error: 'Something broke!',
-    message: err.message 
-  });
+// Test database endpoint
+app.get('/api/test-db', async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database not connected'
+      });
+    }
+    
+    const collections = await mongoose.connection.db.listCollections().toArray();
+    res.json({
+      success: true,
+      message: 'Database connected',
+      collections: collections.map(c => c.name)
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
 });
 
-const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+// ✅ FIX: Proper server configuration for Render
+const server = app.listen(PORT, HOST, () => {
+  console.log(`🚀 Server is RUNNING!`);
+  console.log(`📡 Host: ${HOST}`);
+  console.log(`🔌 Port: ${PORT}`);
+  console.log(`🌍 URL: http://${HOST}:${PORT}`);
+  console.log(`🔗 Public: https://mekelle-bread-making.onrender.com`);
   console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Local: http://localhost:${PORT}`);
 });
+
+// ✅ FIX: Critical - Increase keepAliveTimeout to prevent 502
+server.keepAliveTimeout = 120000; // 120 seconds
+server.headersTimeout = 120000;    // 120 seconds
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
