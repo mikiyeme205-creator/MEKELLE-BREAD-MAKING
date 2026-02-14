@@ -1,41 +1,51 @@
-# .github/workflows/create-production-builds.yml
 name: Create Production Builds
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build_android:
     name: Build Android APK
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: frontend
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v3
-
-      - name: ⚙️ Setup Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
         with:
           node-version: 18.x
-
-      - name: 📱 Setup Expo & EAS
-        uses: expo/expo-github-action@v8
+      
+      - name: 📦 Install dependencies with legacy peer deps
+        run: npm install --legacy-peer-deps
+      
+      - name: 🔧 Install EAS CLI globally
+        run: npm install -g eas-cli
+      
+      - name: 🔑 Verify EAS installation
+        run: |
+          npx eas --version
+          npx eas whoami || echo "Not logged in"
+      
+      - name: 🚀 Build APK with EAS
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          # Login using token
+          npx expo login --non-interactive --token $EXPO_TOKEN
+          
+          # Build the APK
+          npx eas build --platform android --profile preview --non-interactive
+      
+      - name: 📤 Upload APK
+        uses: actions/upload-artifact@v4
         with:
-          expo-version: latest
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
-      - name: 📦 Install dependencies
-        run: |
-          cd frontend
-          npm install
-
-      - name: 🚀 Build Android APK
-        run: |
-          cd frontend
-          eas build --platform android --profile preview --non-interactive --wait
-
-      - name: ✅ Build Finished
-        run: echo "Android build completed successfully!"
+          name: digital-bread-app
+          path: |
+            frontend/*.apk
+            frontend/app/build/outputs/apk/**/*.apk
+          if-no-files-found: warn
+          retention-days: 30
