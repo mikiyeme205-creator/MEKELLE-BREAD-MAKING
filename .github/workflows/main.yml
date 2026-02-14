@@ -9,38 +9,25 @@ jobs:
   build_android:
     name: Build Android APK
     runs-on: ubuntu-latest
-
+    defaults:
+      run:
+        working-directory: frontend
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: ⚙️ Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
-
-      - name: 📦 Install Expo and EAS
-        run: npm install -g expo-cli eas-cli
-
-      - name: 📦 Install dependencies
-        run: |
-          cd frontend
-          npm install
-
-      - name: 🔑 Check Expo token
+          node-version: 18.x
+      
+      - name: 📦 Install dependencies with legacy peer deps
+        run: npm install --legacy-peer-deps
+      
+      - name: 🚀 Build APK
+        run: npx eas build --platform android --profile preview --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: |
-          if [ -z "$EXPO_TOKEN" ]; then
-            echo "❌ EXPO_TOKEN is not set!"
-            exit 1
-          else
-            echo "✅ EXPO_TOKEN is set"
-          fi
-
-      - name: 🚀 Start EAS Build
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-        run: |
-          cd frontend
-          npx eas build --platform android --profile preview --non-interactive --wait
+      
+      - name: 📤 Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: digital-bread-app
+          path: frontend/*.apk
