@@ -1,34 +1,33 @@
-// backend/config/database.js
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
-const connectDB = async () => {
+const uri = process.env.MONGODB_URI;
+
+// ✅ UPDATED: Add these SSL options
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  },
+  // 🔧 ADD THESE SSL/TLS OPTIONS
+  tls: true,
+  tlsAllowInvalidCertificates: true, // Only for troubleshooting
+  tlsAllowInvalidHostnames: true,     // Only for troubleshooting
+  retryWrites: true,
+  w: 'majority',
+  connectTimeoutMS: 30000,
+  socketTimeoutMS: 45000,
+});
+
+async function connectDB() {
   try {
-    const uri = process.env.MONGODB_URI;
-    
-    if (!uri) {
-      throw new Error('MONGODB_URI not found in environment variables');
-    }
-
-    console.log('🔌 Connecting to MongoDB...');
-    
-    const client = new MongoClient(uri, {
-      serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-      }
-    });
-
     await client.connect();
     await client.db("admin").command({ ping: 1 });
-    
-    console.log('✅ Successfully connected to MongoDB Atlas!');
+    console.log("✅ MongoDB connected successfully!");
     return client;
-    
   } catch (error) {
-    console.error('❌ MongoDB connection failed:', error.message);
-    throw error; // Re-throw to handle in server.js
+    console.error("❌ MongoDB connection error:", error.message);
+    console.error("Full error:", error);
+    process.exit(1);
   }
-};
-
-module.exports = connectDB;
+}
