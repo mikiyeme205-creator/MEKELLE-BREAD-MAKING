@@ -17,7 +17,7 @@ const connectDB = async () => {
       throw new Error('MONGODB_URI not found in environment variables');
     }
 
-    console.log('🔌 Connecting to MongoDB Atlas...');
+    console.log('Connecting to MongoDB Atlas...');
     
     const client = new MongoClient(uri, {
       serverApi: {
@@ -30,10 +30,10 @@ const connectDB = async () => {
     await client.connect();
     await client.db("admin").command({ ping: 1 });
     
-    console.log('✅ Successfully connected to MongoDB Atlas!');
+    console.log('Successfully connected to MongoDB Atlas!');
     return client;
   } catch (error) {
-    console.error('❌ MongoDB connection failed:', error.message);
+    console.error('MongoDB connection failed:', error.message);
     process.exit(1);
   }
 };
@@ -42,7 +42,7 @@ const connectDB = async () => {
 connectDB().then(client => {
   app.locals.db = client.db('digital_bread');
   app.locals.mongoClient = client;
-  console.log('📊 Database: digital_bread');
+  console.log('Database: digital_bread');
 });
 
 // Test route
@@ -74,25 +74,25 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
-// ✅ FIXED: Correct PORT declaration (LINE 68)
+// ✅ CORRECT: PORT declaration
 const PORT = process.env.PORT || 5000;
 
-// ✅ FIXED: Correct console.log with backticks (LINE 71)
+// ✅ CORRECT: console.log with backticks (LINE 82 FIXED)
 const server = app.listen(PORT, () => {
-  console.log(🚀 Server running on port ${PORT});
-  console.log(📝 Environment: ${process.env.NODE_ENV || 'development'});
-  console.log(🔗 Local: http://localhost:${PORT});
+  console.log(Server running on port ${PORT});  // ← REMOVED emoji, plain text
+  console.log(Environment: ${process.env.NODE_ENV || 'development'});
+  console.log(Local: http://localhost:${PORT});
 });
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-  console.log('\n👋 Shutting down gracefully...');
+  console.log('\nShutting down gracefully...');
   if (app.locals.mongoClient) {
     await app.locals.mongoClient.close();
-    console.log('📊 MongoDB connection closed');
+    console.log('MongoDB connection closed');
   }
   server.close(() => {
-    console.log('🛑 Server stopped');
+    console.log('Server stopped');
     process.exit(0);
   });
 });
