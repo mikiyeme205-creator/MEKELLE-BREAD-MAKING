@@ -11,6 +11,9 @@ app.get('/', (req, res) => {
   res.json({ message: 'Digital Bread API is running!' });
 });
 
+app.listen(PORT, () => {
+  console.log( Server running on port ${PORT});
+});
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', time: new Date().toISOString() });
