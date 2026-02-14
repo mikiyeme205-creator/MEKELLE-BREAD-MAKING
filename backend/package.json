@@ -10,7 +10,7 @@
     "debug": "node --trace-deprecation --trace-warnings server.js"
   },
   "engines": {
-    "node": "18.20.8",
+    "node": "18.x",
     "npm": "9.x"
   },
   "dependencies": {
@@ -20,9 +20,7 @@
     "dotenv": "^16.4.7",
     "cors": "^2.8.5",
     "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
-    "https": "^1.0.0",
-    "tls": "^1.0.1"
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"
